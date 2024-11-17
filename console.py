@@ -52,7 +52,7 @@ class HBNBCommand(cmd.Cmd):
         try:
             # Parse line left to right
             pline = line[:]
-            
+
             # Isolate <class name>
             _cls = pline[:pline.find('.')]
 
@@ -74,7 +74,7 @@ class HBNBCommand(cmd.Cmd):
                 pline = pline[2].strip()  # pline is now str
                 if pline:
                     # Check for *args or **kwargs
-                    if pline[0] == '{' and pline[-1] == '}'and type(eval(pline)) is dict:
+                    if pline[0] == '{' and pline[-1] == '}' and type(eval(pline)) is dict:
                         _args = pline
                     else:
                         _args = pline.replace(',', '')
