@@ -4,14 +4,14 @@
 import unittest
 import os
 import sys
+from pathlib import Path
+
+# Get the absolute path to the project root directory
+project_root = Path(__file__).resolve().parent.parent.parent
+sys.path.append(str(project_root))
+
 from models.base_model import BaseModel
 from models.user import User
-
-# Add parent directory to path to make imports work
-sys.path.insert(0, os.path.abspath(os.path.join
-                                   (os.path.dirname(__file__), '../..')))
-
-
 
 
 class TestUser(unittest.TestCase):
@@ -49,6 +49,7 @@ class TestUser(unittest.TestCase):
         self.assertIsInstance(self.user.password, str)
         self.assertIsInstance(self.user.first_name, str)
         self.assertIsInstance(self.user.last_name, str)
+
 
 if __name__ == '__main__':
     unittest.main()
