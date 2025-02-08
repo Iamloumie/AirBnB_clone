@@ -1,76 +1,83 @@
 #!/usr/bin/python3
 """
-This module defines the BaseModel class which serves as the base
-class for all models in the project
+The basemodel script that defines all coomon attributes/methods
+for other classes.
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
+import models.engine
 
 
 class BaseModel:
-    """
-    BaseModel class defines all common attributes/methods for other
-    classes
-    """
+    """The mother model for other classes"""
 
     def __init__(self, *args, **kwargs):
-        """Initializes new BaseModel instance
-        Args:
-        *args: Variabe length argument list(won't be used)
-        **kwargs: Arbitrary keyword arguments to recreate instance
         """
-        # Define the time format used in the dictionary
-        time_format = "%Y-%m-%dT%H:%M:%S.%f"
+        The entry point of the program
+        """
+        self.id = str(uuid.uuid4())
+
+        self.created_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(timezone.utc)
 
         if kwargs:
             for key, value in kwargs.items():
-                if key != "__class__":
-                    if key in ["created_at", "updated_at"]:
-                        #convert string to datetime object
-                        setattr(self, key, datetime.strptime(value, time_format))
-                    else:
-                        # Set the attribute to datetime object
-                        setattr(self, key, value)
-        else:
-            # Creates a new instance with unique Id and time_format
-            from models import storage
-            self.id = str(uuid.uuid4())
-            self.created_at = datetime.now()
-            self.updated_at = self.created_at
-            # Add the new instance for storage
-            storage.new(self)
+                if key == "__class__":
+                    continue
+                elif key == "created_at" or key == "updated_at":
+                    setattr(self, key, datetime.fromisoformat(value))
+                else:
+                    setattr(self, key, value)
 
-    def __str__(self):
-        """
-        Returns string representation of the BaseModel instance
-        format: [<class name>] (<self.id>) <self.__dict__>
-        """
-
-        return "[{}] ({}) {}".format(
-                self.__class__.__name__,
-                self.id,
-                self.__dict__
-        )
+        models.storage.new(self)
 
     def save(self):
-        """Updates the updated_at attribute with current datetime"""
-        from models import storage
-        self.updated_at = datetime.now()
-        # Save to storage
-        storage.save()
+        """
+        Saves the current time an instance is created
+        when save method is called
+        """
+        self.updated_at = datetime.now(timezone.utc)
+        models.storage.save()
 
     def to_dict(self):
-        """Returns the dictionary representation of the BaseModel instance"""
+        """Returns a dictionary containing all key values of instances"""
+        inst_dict = self.__dict__.copy()  # making a copy of every dict created
+        inst_dict["__class__"] = self.__class__.__name__
 
-        # start with a copy of the instance's dictionary
-        result_dict = self.__dict__.copy()
+        # created_at and updated_at keys and values
+        inst_dict["created_at"] = self.created_at.isoformat()
+        inst_dict["updated_at"] = self.updated_at.isoformat()
 
-        # Add class name
-        result_dict['__class__'] = self.__class__.__name__
+        return inst_dict
 
-        # Convert datetime objects to ISO format strings
-        result_dict['created_at'] = self.created_at.isoformat()
-        result_dict['updated_at'] = self.updated_at.isoformat()
+    def __str__(self):
+        """Prints the class name, id and dict of instances created"""
+        class_name = self.__class__.__name__
+        return "[{}] ({}) {}".format(class_name, self.id, self.__dict__)
 
-        return result_dict
+
+if __name__ == "__main__":
+    my_model = BaseModel()
+    my_model.name = "My_First_Model"
+    my_model.my_number = 89
+    print(my_model.id)
+    print(my_model)
+    print(type(my_model.created_at))
+    print("--")
+    my_model_json = my_model.to_dict()
+    print(my_model_json)
+    print("JSON of my_model:")
+    for key in my_model_json.keys():
+        print(
+            "\t{}: ({}) - {}".format(key,
+                                     type(my_model_json[key]), my_model_json[key])
+        )
+    print("--")
+    my_new_model = BaseModel(**my_model_json)
+    print(my_new_model.id)
+    print(my_new_model)
+    print(type(my_new_model.created_at))
+
+    print("--")
+    print(my_model is my_new_model)
